@@ -2,6 +2,15 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 
+
+__doc__ = """Using a matplotlib imshow plot of an quadratic matrix of ones. By
+clicking on particular cells, one can change the respective state of the cell to
+its negative. Hence one can create a pattern. The Key activities are:
+    n: add a pattern to a set and start an empty plot.
+    b: save the set to a file.
+
+
+    """
 class PatternCreator:
     def __init__(self, size):
         self.size = size
@@ -10,40 +19,65 @@ class PatternCreator:
 
 
 
-        self._fig = plt.figure()        # erstellt Fenster
-        self._ax = plt.subplot()        # erstellt Plot
+        self._fig = plt.figure()
+        self._ax = plt.subplot()
         self._fig.canvas.mpl_connect('button_press_event', self.onPress)
-
+        self._fig.canvas.mpl_connect('key_press_event', self.press)
         self.new_pattern = np.ones( (self.size, self.size) )
-        self.img = plt.imshow(self.new_pattern)
+        self._img = plt.imshow(self.new_pattern)
         plt.show()
 
     def add_pattern(self, pattern):
+        """Add a pattern to the list and increase the number of patterns"""
         assert (len(pattern[:,0]) == self.size) and len(pattern[0]) == self.size, "Pattern has to be a (n x n) matrix with n = size."
         self.patterns.append(pattern)
+        print("Add pattern.")
         self.number_of_pattern += 1
 
     def get_trainings_set(self):
+        """Cast the list to an numpy array and returns it in shape
+        (number_of_pattern, size_of_pattern) where size_of_pattern is the to
+        one dimmension flattened vector of the quadratic matrix of the pattern."""
         ret = np.zeros( (self.number_of_pattern, self.size**2) )
         for i in range(self.number_of_pattern):
             ret[i] = self.patterns[i].flatten()
         return ret
 
     def onPress(self, event):
-        """Festlegung der Startwerte und Berechung"""
         mode = plt.get_current_fig_manager().toolbar.mode
-        # Button: 1 == rechts, mode: Normal oder zoom, pan, etc.
-        if event.button == 1 and event.inaxes and mode == '': # Fehler abfangen
+        if event.button == 1 and event.inaxes and mode == '':
             self.update(int(event.xdata+0.5),int(event.ydata+0.5))
 
     def update(self, i, j):
-        self.new_pattern[j][i] = -1
-        self.img.set_data(self.new_pattern)
-        self.img.autoscale()
-        print(self.new_pattern)
+        """Change the sign of the cell (i,j) and update the plot."""
+        self.new_pattern[j][i] *= -1
+        self.update_plot()
+
+    def update_plot(self):
+        self._img.set_data(self.new_pattern)
+        self._img.autoscale()
         self._fig.canvas.draw()
 
 
+    def press(self, event):
+        if event.key == 'n':
+            self.add_pattern(self.new_pattern.copy())
+            self.new_pattern = np.ones( (self.size, self.size) )
+            self.update_plot()
+        if event.key == 'b':
+            self.save_pattern()
+
+    def save_pattern(self):
+        np.save("test", self.get_trainings_set())
+        print("Saved Pattern.")
 
 
+    def decode_to_orthogonal_code(self):
+        """TODO: Find some way to convert a set of pattern such that the
+        Correlation \sum x_j^n x_j^m = 0 for m != n is at most satisfied.
+        Therefore the patterns are orthogonal and the capacity of the neural
+        network should increase."""
+        pass
+
+print(__doc__)
 p = PatternCreator(15)
