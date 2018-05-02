@@ -32,12 +32,14 @@ class HopfieldModell():
         pattern_number, pattern_size = trainings_set.shape
         assert pattern_size == self.node_number, "incompatible array size"
         self.trainings_set = trainings_set
-        for i in range(self.node_number):
-            for j in range(self.node_number):
-                s = 0
-                for n in range(pattern_number):
-                    s += trainings_set[n][i] * trainings_set[n][j]
-                self.weights[i][j] = s / self.node_number
+        self.get_storage_capacity()
+        for n in range(pattern_number):
+            self.weights += np.outer(trainings_set[n], trainings_set[n])
+        self.weights /= self.node_number
+        if self.is_self_coupling():
+            print("The Modell is self coupling. This can produce spurious states.")
+        else:
+            print("The Modell is not self coupling.")
 
     def load_data(self, name="test"):
         self.trainings_set = np.load(name + ".npy")
@@ -50,20 +52,24 @@ class HopfieldModell():
         assert type(self.trainings_set) != None, "No trainings_set given."
         number_of_pattern, pattern_size = self.trainings_set.shape
         C = np.zeros( (number_of_pattern, pattern_size) )
+        # TODO: Improve the multiplication by numpy operations
         for m in range(number_of_pattern):
             for i in range(pattern_size):
                 s = 0
-                for j in range(pattern_size):
-                    for n in [x for x in range(number_of_pattern) if x != i]:
-                        s += self.trainings_set[n][i] * self.trainings_set[n][j] * self.trainings_set[m][j]
+                for n in [x for x in range(number_of_pattern) if x != i]:
+                    s += self.trainings_set[n][i] * np.dot(self.trainings_set[n], self.trainings_set[m])
                 C[m][i] = -self.trainings_set[m][i] * s
         C = C / self.node_number
         if np.max(C) > 1:
             print("Modell may be not stable.")
+        else:
+            print("Storage capacity is below 1.")
         return C
 
 
     def energy_function(self, pattern):
+        """Evaluate the energy_function H = - \frac{1}{2} \sum w_{ij} S_i S_j
+        of the HopfieldModell for the given pattern."""
         if pattern.shape != (self.size, self.size):
             S = pattern.flatten()
         H = np.dot(S, np.dot(self.weights, S))
@@ -72,6 +78,20 @@ class HopfieldModell():
     def plot_energy(self):
         plt.plot(range(len(self.H)), self.H)
         plt.show()
+
+    def is_self_coupling(self) -> "Bool":
+        """The nodes are self coupling if there are weights[i][i] != 0. If so the
+        function returns True else False. Self coupling can produce spurious
+        states and is therefore not likely. See delete_self_coupling()."""
+        if np.sum(np.diagonal(self.weights)) != 0:
+            return True
+        else:
+            return False
+
+    def delete_self_coupling(self):
+        """Set the diagonal entries of weights[i][i] to 0 for avoiding spurious
+        states."""
+        self.weights -= np.diag(np.diagonal(self.weights))
 
 
 class HopfieldModellTestCase(unittest.TestCase):
@@ -100,9 +120,16 @@ class HopfieldModellTestCase(unittest.TestCase):
         test_result = h.run(test_pattern, 1000)
         self.assertTrue(np.sum( pattern - test_result ) < 10)
 
-test = 0
+    def test_self_coupling(self):
+        h = HopfieldModell(2)
+        h.weights = np.diag(np.ones(4))
+        self.assertTrue(h.is_self_coupling())
+        h.delete_self_coupling()
+        self.assertFalse(h.is_self_coupling())
+
+test = 1
 if not test:
-    n = 15
+    n = 20
     h = HopfieldModell(n)
     pattern = np.ones( (n, n) ) - 2*np.diag(np.ones(n))
     trainings_set = np.zeros( (1, n**2) )
@@ -114,6 +141,7 @@ if not test:
         index2 = np.random.randint(n)
         test_pattern[index1][index2] = np.random.randint(3) - 1
     test_result = h.run(test_pattern, 1000)
+    h.plot_energy()
 
 
 
