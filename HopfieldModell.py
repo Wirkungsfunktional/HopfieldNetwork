@@ -26,15 +26,16 @@ class HopfieldModell():
         return init_data.reshape( (self.size, self.size) )
 
     def training(   self,
-                    trainings_set: "array of shape (Int, Int)"):
+                    trainings_set = "None"):
         """Using the trainings_set to evaluate the weights of the Modell by using
         the Hebb superposition of all members of the set."""
-        pattern_number, pattern_size = trainings_set.shape
+        if trainings_set != "None":
+            self.trainings_set = trainings_set
+        pattern_number, pattern_size = self.trainings_set.shape
         assert pattern_size == self.node_number, "incompatible array size"
-        self.trainings_set = trainings_set
         self.get_storage_capacity()
         for n in range(pattern_number):
-            self.weights += np.outer(trainings_set[n], trainings_set[n])
+            self.weights += np.outer(self.trainings_set[n], self.trainings_set[n])
         self.weights /= self.node_number
         if self.is_self_coupling():
             print("The Modell is self coupling. This can produce spurious states.")
@@ -127,21 +128,39 @@ class HopfieldModellTestCase(unittest.TestCase):
         h.delete_self_coupling()
         self.assertFalse(h.is_self_coupling())
 
-test = 1
+test = 0
+version = 2
 if not test:
-    n = 20
-    h = HopfieldModell(n)
-    pattern = np.ones( (n, n) ) - 2*np.diag(np.ones(n))
-    trainings_set = np.zeros( (1, n**2) )
-    trainings_set[0] = pattern.flatten()
-    h.training(trainings_set)
-    test_pattern = pattern
-    for i in range(int(n/2)):
-        index1 = np.random.randint(n)
-        index2 = np.random.randint(n)
-        test_pattern[index1][index2] = np.random.randint(3) - 1
-    test_result = h.run(test_pattern, 1000)
-    h.plot_energy()
+    if version == 1:
+        n = 20
+        h = HopfieldModell(n)
+        pattern = np.ones( (n, n) ) - 2*np.diag(np.ones(n))
+        trainings_set = np.zeros( (1, n**2) )
+        trainings_set[0] = pattern.flatten()
+        h.training(trainings_set)
+        test_pattern = pattern
+        for i in range(int(n/2)):
+            index1 = np.random.randint(n)
+            index2 = np.random.randint(n)
+            test_pattern[index1][index2] = np.random.randint(3) - 1
+        test_result = h.run(test_pattern, 1000)
+        h.plot_energy()
+    if version == 2:
+        n = 15
+        h = HopfieldModell(n)
+        h.load_data("Symbols")
+        h.training()
+        #h.delete_self_coupling()
+        test_pattern = h.trainings_set[1].reshape((n,n))
+        for i in range(int(n/2)):
+            index1 = np.random.randint(n)
+            index2 = np.random.randint(n)
+            test_pattern[index1][index2] = np.random.randint(3) - 1
+        plt.imshow(test_pattern)
+        plt.show()
+        test_result = h.run(test_pattern, 2000)
+        plt.imshow(test_result)
+        plt.show()
 
 
 

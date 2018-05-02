@@ -1,5 +1,6 @@
 import numpy as np
 from matplotlib import pyplot as plt
+import MenuBar
 
 
 
@@ -20,12 +21,29 @@ class PatternCreator:
 
 
         self._fig = plt.figure()
+        self._fig.subplots_adjust(left=0.3)
         self._ax = plt.subplot()
+
+        labels = ('add', 'save', 'quit')
+        menu = MenuBar.make_menu(self._fig, labels, self.on_select)
         self._fig.canvas.mpl_connect('button_press_event', self.onPress)
-        self._fig.canvas.mpl_connect('key_press_event', self.press)
         self.new_pattern = np.ones( (self.size, self.size) )
         self._img = plt.imshow(self.new_pattern)
         plt.show()
+
+
+
+
+    def on_select(self, item):
+        if item.labelstr == "quit":
+            exit()
+        if item.labelstr == "save":
+            self.save_pattern()
+        if item.labelstr == "add":
+            self.add_pattern(self.new_pattern.copy())
+            self.new_pattern = np.ones( (self.size, self.size) )
+            self.update_plot()
+
 
     def add_pattern(self, pattern):
         """Add a pattern to the list and increase the number of patterns"""
@@ -58,14 +76,6 @@ class PatternCreator:
         self._img.autoscale()
         self._fig.canvas.draw()
 
-
-    def press(self, event):
-        if event.key == 'n':
-            self.add_pattern(self.new_pattern.copy())
-            self.new_pattern = np.ones( (self.size, self.size) )
-            self.update_plot()
-        if event.key == 'b':
-            self.save_pattern()
 
     def save_pattern(self):
         np.save("test", self.get_trainings_set())
