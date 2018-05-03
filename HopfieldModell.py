@@ -21,7 +21,7 @@ class HopfieldModell():
         for i in range(number_of_iteration):
             n = np.random.randint(self.node_number)
             init_data[n] = np.sign(np.dot(self.weights[n], init_data))
-            H[i] = self.energy_function(init_data)
+            #H[i] = self.energy_function(init_data)
         self.H = H
         return init_data.reshape( (self.size, self.size) )
 
@@ -54,10 +54,10 @@ class HopfieldModell():
         number_of_pattern, pattern_size = self.trainings_set.shape
         C = np.zeros( (number_of_pattern, pattern_size) )
         # TODO: Improve the multiplication by numpy operations
-        for m in range(number_of_pattern):
-            for i in range(pattern_size):
+        for i in range(pattern_size):
+            for m in range(number_of_pattern):
                 s = 0
-                for n in [x for x in range(number_of_pattern) if x != i]:
+                for n in [x for x in range(number_of_pattern) if x != m]:
                     s += self.trainings_set[n][i] * np.dot(self.trainings_set[n], self.trainings_set[m])
                 C[m][i] = -self.trainings_set[m][i] * s
         C = C / self.node_number
@@ -139,27 +139,28 @@ if not test:
         trainings_set[0] = pattern.flatten()
         h.training(trainings_set)
         test_pattern = pattern
-        for i in range(int(n/2)):
+        for i in range(int(n/4)):
             index1 = np.random.randint(n)
             index2 = np.random.randint(n)
             test_pattern[index1][index2] = np.random.randint(3) - 1
         test_result = h.run(test_pattern, 1000)
         h.plot_energy()
     if version == 2:
-        n = 15
+        n = 25
         h = HopfieldModell(n)
-        h.load_data("Symbols")
+        h.load_data("test")
         h.training()
-        #h.delete_self_coupling()
-        test_pattern = h.trainings_set[1].reshape((n,n))
-        for i in range(int(n/2)):
+        h.delete_self_coupling()
+        test_pattern = h.trainings_set[1].reshape((n,n)).copy()
+        for i in range(int(n)):
             index1 = np.random.randint(n)
             index2 = np.random.randint(n)
-            test_pattern[index1][index2] = np.random.randint(3) - 1
-        plt.imshow(test_pattern)
+            test_pattern[index1][index2] = -1
+        plt.imshow(-test_pattern + h.trainings_set[1].reshape((n,n)))
         plt.show()
-        test_result = h.run(test_pattern, 2000)
-        plt.imshow(test_result)
+        test_result = h.run(test_pattern.copy(), 100000)
+        #h.plot_energy()
+        plt.imshow(test_result - h.trainings_set[1].reshape((n,n)))
         plt.show()
 
 

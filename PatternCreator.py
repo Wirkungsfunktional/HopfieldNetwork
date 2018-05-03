@@ -20,13 +20,18 @@ class PatternCreator:
 
 
 
+
         self._fig = plt.figure()
         self._fig.subplots_adjust(left=0.3)
         self._ax = plt.subplot()
+        self.is_clicked = False
+        self.set_element = -1 # -1 draw and 1 delete cell
 
-        labels = ('add', 'save', 'quit')
-        menu = MenuBar.make_menu(self._fig, labels, self.on_select)
+        self.labels = ('add', 'save', 'quit', 'draw/delete', 'random pattern')
+        menu = MenuBar.make_menu(self._fig, self.labels, self.on_select)
         self._fig.canvas.mpl_connect('button_press_event', self.onPress)
+        self._fig.canvas.mpl_connect('motion_notify_event', self.on_motion)
+        self._fig.canvas.mpl_connect('button_release_event', self.on_release)
         self.new_pattern = np.ones( (self.size, self.size) )
         self._img = plt.imshow(self.new_pattern)
         plt.show()
@@ -43,6 +48,10 @@ class PatternCreator:
             self.add_pattern(self.new_pattern.copy())
             self.new_pattern = np.ones( (self.size, self.size) )
             self.update_plot()
+        if item.labelstr == self.labels[3]:
+            self.set_element *= -1
+        if item.labelstr == self.labels[4]:
+            self.add_random_pattern();
 
 
     def add_pattern(self, pattern):
@@ -51,6 +60,11 @@ class PatternCreator:
         self.patterns.append(pattern)
         print("Add pattern.")
         self.number_of_pattern += 1
+
+    def add_random_pattern(self):
+        self.new_pattern = np.ones( (self.size, self.size) ) - 2*np.random.randint(2, size = (self.size, self.size))
+        self.add_pattern(self.new_pattern)
+
 
     def get_trainings_set(self):
         """Cast the list to an numpy array and returns it in shape
@@ -62,13 +76,22 @@ class PatternCreator:
         return ret
 
     def onPress(self, event):
+        self.is_clicked = True
         mode = plt.get_current_fig_manager().toolbar.mode
         if event.button == 1 and event.inaxes and mode == '':
             self.update(int(event.xdata+0.5),int(event.ydata+0.5))
 
+    def on_motion(self, event):
+        if event.inaxes != self._ax: return
+        if self.is_clicked:
+            self.update(int(event.xdata+0.5),int(event.ydata+0.5))
+
+    def on_release(self, event):
+        self.is_clicked = False
+
     def update(self, i, j):
         """Change the sign of the cell (i,j) and update the plot."""
-        self.new_pattern[j][i] *= -1
+        self.new_pattern[j][i] = self.set_element
         self.update_plot()
 
     def update_plot(self):
@@ -90,4 +113,4 @@ class PatternCreator:
         pass
 
 print(__doc__)
-p = PatternCreator(15)
+p = PatternCreator(25)
