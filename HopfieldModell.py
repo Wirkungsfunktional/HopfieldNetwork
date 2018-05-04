@@ -33,7 +33,7 @@ class HopfieldModell():
             self.trainings_set = trainings_set
         pattern_number, pattern_size = self.trainings_set.shape
         assert pattern_size == self.node_number, "incompatible array size"
-        self.get_storage_capacity()
+        self.get_storage_capacity(self.trainings_set)
         for n in range(pattern_number):
             self.weights += np.outer(self.trainings_set[n], self.trainings_set[n])
         self.weights /= self.node_number
@@ -46,21 +46,21 @@ class HopfieldModell():
         self.trainings_set = np.load(name + ".npy")
         print("Load Data")
 
-
-    def get_storage_capacity(self) -> "Storage capacity":
+    @staticmethod
+    def get_storage_capacity(trainings_set) -> "Storage capacity":
         """Compute the storage capacity of the trainings_set. if C > 1 the Modell
         is not stable"""
-        assert type(self.trainings_set) != None, "No trainings_set given."
-        number_of_pattern, pattern_size = self.trainings_set.shape
+        assert type(trainings_set) != None, "No trainings_set given."
+        number_of_pattern, pattern_size = trainings_set.shape
         C = np.zeros( (number_of_pattern, pattern_size) )
         # TODO: Improve the multiplication by numpy operations
         for i in range(pattern_size):
             for m in range(number_of_pattern):
                 s = 0
                 for n in [x for x in range(number_of_pattern) if x != m]:
-                    s += self.trainings_set[n][i] * np.dot(self.trainings_set[n], self.trainings_set[m])
-                C[m][i] = -self.trainings_set[m][i] * s
-        C = C / self.node_number
+                    s += trainings_set[n][i] * np.dot(trainings_set[n], trainings_set[m])
+                C[m][i] = -trainings_set[m][i] * s
+        C = C / pattern_size
         if np.max(C) > 1:
             print("Modell may be not stable.")
         else:
@@ -127,7 +127,7 @@ class HopfieldModellTestCase(unittest.TestCase):
         self.assertTrue(h.is_self_coupling())
         h.delete_self_coupling()
         self.assertFalse(h.is_self_coupling())
-
+"""
 test = 0
 version = 2
 if not test:
@@ -146,7 +146,7 @@ if not test:
         test_result = h.run(test_pattern, 1000)
         h.plot_energy()
     if version == 2:
-        n = 25
+        n = 50
         h = HopfieldModell(n)
         h.load_data("test")
         h.training()
@@ -173,3 +173,4 @@ if not test:
 
 else:
     unittest.main()
+"""

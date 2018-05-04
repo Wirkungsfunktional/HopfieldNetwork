@@ -1,6 +1,8 @@
 import numpy as np
 from matplotlib import pyplot as plt
 import MenuBar
+import GraphicAlgorithms as GA
+import HopfieldModell as HM
 
 
 
@@ -17,19 +19,23 @@ class PatternCreator:
         self.size = size
         self.patterns = []
         self.number_of_pattern = 0
+        self._fill_option = 0
+        self._line_option = 0
+        self._start_point = None
+        self._end_point = None
 
 
 
 
         self._fig = plt.figure()
-        self._fig.subplots_adjust(left=0.3)
+        self._fig.subplots_adjust(left=0.5)
         self._ax = plt.subplot()
         self.is_clicked = False
         self.set_element = -1 # -1 draw and 1 delete cell
 
-        self.labels = ('add', 'save', 'quit', 'draw/delete', 'random pattern')
+        self.labels = ('add', 'save', 'quit', 'draw/delete', 'random pattern', 'fill', 'line')
         menu = MenuBar.make_menu(self._fig, self.labels, self.on_select)
-        self._fig.canvas.mpl_connect('button_press_event', self.onPress)
+        self._fig.canvas.mpl_connect('button_press_event', self.on_click)
         self._fig.canvas.mpl_connect('motion_notify_event', self.on_motion)
         self._fig.canvas.mpl_connect('button_release_event', self.on_release)
         self.new_pattern = np.ones( (self.size, self.size) )
@@ -40,18 +46,23 @@ class PatternCreator:
 
 
     def on_select(self, item):
-        if item.labelstr == "quit":
-            exit()
-        if item.labelstr == "save":
-            self.save_pattern()
-        if item.labelstr == "add":
+        if item.labelstr == self.labels[0]:
             self.add_pattern(self.new_pattern.copy())
             self.new_pattern = np.ones( (self.size, self.size) )
             self.update_plot()
+        if item.labelstr == self.labels[1]:
+            self.save_pattern()
+        if item.labelstr == self.labels[2]:
+            exit()
         if item.labelstr == self.labels[3]:
             self.set_element *= -1
         if item.labelstr == self.labels[4]:
-            self.add_random_pattern();
+            self.add_random_pattern()
+        if item.labelstr == self.labels[5]:
+            self._fill_option ^= 1
+            print(self._fill_option)
+        if item.labelstr == self.labels[6]:
+            self._line_option ^= 1
 
 
     def add_pattern(self, pattern):
@@ -60,11 +71,12 @@ class PatternCreator:
         self.patterns.append(pattern)
         print("Add pattern.")
         self.number_of_pattern += 1
+        HM.HopfieldModell.get_storage_capacity(self.get_trainings_set())
+
 
     def add_random_pattern(self):
         self.new_pattern = np.ones( (self.size, self.size) ) - 2*np.random.randint(2, size = (self.size, self.size))
         self.add_pattern(self.new_pattern)
-
 
     def get_trainings_set(self):
         """Cast the list to an numpy array and returns it in shape
@@ -75,11 +87,18 @@ class PatternCreator:
             ret[i] = self.patterns[i].flatten()
         return ret
 
-    def onPress(self, event):
-        self.is_clicked = True
+    def on_click(self, event):
         mode = plt.get_current_fig_manager().toolbar.mode
         if event.button == 1 and event.inaxes and mode == '':
-            self.update(int(event.xdata+0.5),int(event.ydata+0.5))
+
+            if self._fill_option == 1:
+                GA.flood_fill(self.new_pattern, int(event.xdata+0.5),int(event.ydata+0.5))
+                self.update_plot()
+            elif self._line_option == 1:
+                self._start_point = (int(event.xdata+0.5),int(event.ydata+0.5))
+            else:
+                self.is_clicked = True
+                self.update(int(event.xdata+0.5),int(event.ydata+0.5))
 
     def on_motion(self, event):
         if event.inaxes != self._ax: return
@@ -88,6 +107,14 @@ class PatternCreator:
 
     def on_release(self, event):
         self.is_clicked = False
+        if self._line_option == 1:
+            self._end_point = (int(event.xdata+0.5),int(event.ydata+0.5))
+            GA.line_draw(   self.new_pattern,
+                            self._start_point[0],
+                            self._start_point[1],
+                            self._end_point[0],
+                            self._end_point[1])
+            self.update_plot()
 
     def update(self, i, j):
         """Change the sign of the cell (i,j) and update the plot."""
@@ -113,4 +140,4 @@ class PatternCreator:
         pass
 
 print(__doc__)
-p = PatternCreator(25)
+p = PatternCreator(1000)
