@@ -46,28 +46,36 @@ class PatternCreator:
 
 
     def on_select(self, item):
+        # Add a pattern to the patterns - list
         if item.labelstr == self.labels[0]:
             self.add_pattern(self.new_pattern.copy())
             self.new_pattern = np.ones( (self.size, self.size) )
             self.update_plot()
+        # Save the patterns - list to a file
         if item.labelstr == self.labels[1]:
             self.save_pattern()
+        # Exit the Program
         if item.labelstr == self.labels[2]:
             exit()
+        # Change Draw to delete option
         if item.labelstr == self.labels[3]:
             self.set_element *= -1
+        # Create a random pattern and add it to the patterns list
         if item.labelstr == self.labels[4]:
             self.add_random_pattern()
+        # Activate the fill option of closed curves
         if item.labelstr == self.labels[5]:
             self._fill_option ^= 1
             print(self._fill_option)
+        # Activate the line option to draw a straight line
         if item.labelstr == self.labels[6]:
             self._line_option ^= 1
 
 
     def add_pattern(self, pattern):
         """Add a pattern to the list and increase the number of patterns"""
-        assert (len(pattern[:,0]) == self.size) and len(pattern[0]) == self.size, "Pattern has to be a (n x n) matrix with n = size."
+        assert (len(pattern[:,0]) == self.size) and len(pattern[0]) == \
+            self.size, "Pattern has to be a (n x n) matrix with n = size."
         self.patterns.append(pattern)
         print("Add pattern.")
         self.number_of_pattern += 1
@@ -75,7 +83,9 @@ class PatternCreator:
 
 
     def add_random_pattern(self):
-        self.new_pattern = np.ones( (self.size, self.size) ) - 2*np.random.randint(2, size = (self.size, self.size))
+        """Create an uniform random pattern and add it to the patterns list."""
+        self.new_pattern = np.ones( (self.size, self.size) ) - \
+                2*np.random.randint(2, size = (self.size, self.size))
         self.add_pattern(self.new_pattern)
 
     def get_trainings_set(self):
@@ -88,6 +98,9 @@ class PatternCreator:
         return ret
 
     def on_click(self, event):
+        """For _fill_option active the function fixes the starting point for the
+        line. For the _fill_option, it fill the closed curve. For non activated
+        options it draw the pixel."""
         mode = plt.get_current_fig_manager().toolbar.mode
         if event.button == 1 and event.inaxes and mode == '':
 
@@ -140,4 +153,4 @@ class PatternCreator:
         pass
 
 print(__doc__)
-p = PatternCreator(1000)
+p = PatternCreator(20)

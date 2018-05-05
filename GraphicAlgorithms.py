@@ -28,10 +28,14 @@ def flood_fill(plot_array, j, i):
 
 def line_draw(plot_array, x_start, y_start, x_end, y_end):
     """TODO: Implement 8 case selection from generic to prototype."""
+
+
     y = y_start
     d = 0
     dx = x_end - x_start
     dy = y_end - y_start
+    m = dx/dy * 1.0
+    print(str(m) + " " + str(dx))
     dd_r = -dy
     dd_ro = dx - dy
     c = 2 * dy - dx

@@ -94,6 +94,36 @@ class HopfieldModell():
         states."""
         self.weights -= np.diag(np.diagonal(self.weights))
 
+    def create_maximal_random_set(self):
+        """Create uniform distributet random pattern and add them to the trainings_set
+        until the Storage capacity satisfies not longer the condition for stable
+        memory reconstruction."""
+        pattern_list = []
+        C = 0.0
+        while np.max(C) < 1.0:
+            new_pattern = np.ones(self.node_number) -  2*np.random.randint(2, size=(self.node_number))
+            pattern_list.append(new_pattern)
+            C = HopfieldModell.get_storage_capacity(np.array(pattern_list))
+        self.trainings_set = np.array(pattern_list[:-1])
+        print("Trainingsset consists of " + str(len(pattern_list)) + " pattern.")
+
+    def test_trainings_pattern(self, p_err, number_of_iteration):
+        """Iterate over all trainings patttern, add radom deviations from the
+        orginal pattern with an amount of node_number*p_err and run the memory
+        reconstruction. The error is evaluated as the sum over the Hammingdistance
+        of all patterns."""
+        for i in range(len(self.trainings_set)):
+            test_pattern = self.trainings_set[i].reshape( (self.size, self.size) )
+            desturbed_pattern = test_pattern.copy()
+            s = 0
+            for n in range(int(self.node_number*p_err)):
+                index1 = np.random.randint(self.size)
+                index2 = np.random.randint(self.size)
+                desturbed_pattern[index1][index2] *= - 1
+            result_pattern = self.run(desturbed_pattern, number_of_iteration)
+            s += np.sum(np.abs(test_pattern - result_pattern))
+        return s
+
 
 class HopfieldModellTestCase(unittest.TestCase):
     """Test class to test the HopfieldModell."""
@@ -117,7 +147,7 @@ class HopfieldModellTestCase(unittest.TestCase):
         for i in range(int(n/2)):
             index1 = np.random.randint(n)
             index2 = np.random.randint(n)
-            test_pattern[index1][index2] = np.random.randint(3) - 1
+            test_pattern[index1][index2] *= -1
         test_result = h.run(test_pattern, 1000)
         self.assertTrue(np.sum( pattern - test_result ) < 10)
 
@@ -127,9 +157,12 @@ class HopfieldModellTestCase(unittest.TestCase):
         self.assertTrue(h.is_self_coupling())
         h.delete_self_coupling()
         self.assertFalse(h.is_self_coupling())
-"""
+
+
+
+
 test = 0
-version = 2
+version = 3
 if not test:
     if version == 1:
         n = 20
@@ -146,31 +179,29 @@ if not test:
         test_result = h.run(test_pattern, 1000)
         h.plot_energy()
     if version == 2:
-        n = 50
+        n = 20
         h = HopfieldModell(n)
         h.load_data("test")
         h.training()
         h.delete_self_coupling()
-        test_pattern = h.trainings_set[1].reshape((n,n)).copy()
+        test_pattern = h.trainings_set[2].reshape((n,n)).copy()
         for i in range(int(n)):
             index1 = np.random.randint(n)
             index2 = np.random.randint(n)
             test_pattern[index1][index2] = -1
-        plt.imshow(-test_pattern + h.trainings_set[1].reshape((n,n)))
+        plt.imshow(test_pattern)
         plt.show()
         test_result = h.run(test_pattern.copy(), 100000)
         #h.plot_energy()
-        plt.imshow(test_result - h.trainings_set[1].reshape((n,n)))
+        plt.imshow(test_result)
         plt.show()
-
-
-
-
-
-
-
+    if version == 3:
+        n = 15
+        h = HopfieldModell(n)
+        h.create_maximal_random_set()
+        h.training()
+        print(h.test_trainings_pattern(0.4, 10000))
 
 
 else:
     unittest.main()
-"""
