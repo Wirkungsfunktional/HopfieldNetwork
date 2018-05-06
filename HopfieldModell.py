@@ -162,7 +162,7 @@ class HopfieldModellTestCase(unittest.TestCase):
 
 
 test = 0
-version = 3
+version = 4
 if not test:
     if version == 1:
         n = 20

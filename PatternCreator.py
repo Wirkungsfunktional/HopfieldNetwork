@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 import MenuBar
 import GraphicAlgorithms as GA
 import HopfieldModell as HM
+import Pattern
 
 
 
@@ -38,8 +39,9 @@ class PatternCreator:
         self._fig.canvas.mpl_connect('button_press_event', self.on_click)
         self._fig.canvas.mpl_connect('motion_notify_event', self.on_motion)
         self._fig.canvas.mpl_connect('button_release_event', self.on_release)
-        self.new_pattern = np.ones( (self.size, self.size) )
-        self._img = plt.imshow(self.new_pattern)
+        self.new_pattern = Pattern.Pattern(self.size)
+
+        self._img = plt.imshow(self.new_pattern.get_quadratic_rep())
         plt.show()
 
 
@@ -48,8 +50,8 @@ class PatternCreator:
     def on_select(self, item):
         # Add a pattern to the patterns - list
         if item.labelstr == self.labels[0]:
-            self.add_pattern(self.new_pattern.copy())
-            self.new_pattern = np.ones( (self.size, self.size) )
+            self.add_pattern(self.new_pattern)
+            self.new_pattern = Pattern.Pattern(self.size)
             self.update_plot()
         # Save the patterns - list to a file
         if item.labelstr == self.labels[1]:
@@ -74,18 +76,17 @@ class PatternCreator:
 
     def add_pattern(self, pattern):
         """Add a pattern to the list and increase the number of patterns"""
-        assert (len(pattern[:,0]) == self.size) and len(pattern[0]) == \
-            self.size, "Pattern has to be a (n x n) matrix with n = size."
+        #assert (len(pattern[:,0]) == self.size) and len(pattern[0]) == \
+        #    self.size, "Pattern has to be a (n x n) matrix with n = size."
         self.patterns.append(pattern)
-        print("Add pattern.")
+        print("Added pattern.")
         self.number_of_pattern += 1
-        HM.HopfieldModell.get_storage_capacity(self.get_trainings_set())
+        #HM.HopfieldModell.get_storage_capacity(self.get_trainings_set())
 
 
     def add_random_pattern(self):
         """Create an uniform random pattern and add it to the patterns list."""
-        self.new_pattern = np.ones( (self.size, self.size) ) - \
-                2*np.random.randint(2, size = (self.size, self.size))
+        self.new_pattern.make_random_pattern()
         self.add_pattern(self.new_pattern)
 
     def get_trainings_set(self):
@@ -94,7 +95,7 @@ class PatternCreator:
         one dimmension flattened vector of the quadratic matrix of the pattern."""
         ret = np.zeros( (self.number_of_pattern, self.size**2) )
         for i in range(self.number_of_pattern):
-            ret[i] = self.patterns[i].flatten()
+            ret[i] = self.patterns[i].get_column_rep()
         return ret
 
     def on_click(self, event):
@@ -105,7 +106,9 @@ class PatternCreator:
         if event.button == 1 and event.inaxes and mode == '':
 
             if self._fill_option == 1:
-                GA.flood_fill(self.new_pattern, int(event.xdata+0.5),int(event.ydata+0.5))
+                GA.flood_fill(  self.new_pattern.get_quadratic_rep(),
+                                int(event.xdata+0.5),
+                                int(event.ydata+0.5))
                 self.update_plot()
             elif self._line_option == 1:
                 self._start_point = (int(event.xdata+0.5),int(event.ydata+0.5))
@@ -122,7 +125,7 @@ class PatternCreator:
         self.is_clicked = False
         if self._line_option == 1:
             self._end_point = (int(event.xdata+0.5),int(event.ydata+0.5))
-            GA.line_draw(   self.new_pattern,
+            GA.line_draw(   self.new_pattern.get_quadratic_rep(),
                             self._start_point[0],
                             self._start_point[1],
                             self._end_point[0],
@@ -131,11 +134,11 @@ class PatternCreator:
 
     def update(self, i, j):
         """Change the sign of the cell (i,j) and update the plot."""
-        self.new_pattern[j][i] = self.set_element
+        self.new_pattern.set_point(j, i, self.set_element)
         self.update_plot()
 
     def update_plot(self):
-        self._img.set_data(self.new_pattern)
+        self._img.set_data(self.new_pattern.get_quadratic_rep())
         self._img.autoscale()
         self._fig.canvas.draw()
 
