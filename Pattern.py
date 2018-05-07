@@ -19,3 +19,8 @@ class Pattern():
 
     def set_point(self, i, j, value):
         self.pattern[i][j] = value
+
+    def set_pattern_from_matrix(self, a):
+        shape = a.shape
+        self.size = shape[0]
+        self.pattern = a
