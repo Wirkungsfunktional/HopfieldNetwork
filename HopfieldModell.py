@@ -10,6 +10,7 @@ class HopfieldModell():
         self.trainings_set = None
         self.H = None
         self.weights = np.zeros( (self.node_number, self.node_number) )
+        self.storage_capacity = np.zeros( (10, 10) )
 
     def run(self,
             init_data: "Input data",
@@ -33,7 +34,7 @@ class HopfieldModell():
             self.trainings_set = trainings_set
         pattern_number, pattern_size = self.trainings_set.shape
         assert pattern_size == self.node_number, "incompatible array size"
-        self.get_storage_capacity(self.trainings_set)
+        self.storage_capacity = self.get_storage_capacity(self.trainings_set)
         for n in range(pattern_number):
             self.weights += np.outer(self.trainings_set[n], self.trainings_set[n])
         self.weights /= self.node_number

@@ -31,8 +31,9 @@ class PatternCreator:
 
         self._fig = plt.figure()
         self._fig.subplots_adjust(left=0.5)
-        self._ax = plt.subplot(211)
-        self._ax2 = plt.subplot(212)
+        self._ax = plt.subplot(221)
+        self._ax2 = plt.subplot(222)
+        self._ax3 = plt.subplot(223)
         self.is_clicked = False
         self.set_element = -1 # -1 draw and 1 delete cell
 
@@ -45,6 +46,8 @@ class PatternCreator:
 
         self._img = self._ax.imshow(self.new_pattern.get_quadratic_rep())
         self._img2 = self._ax2.imshow(self.hopfield.weights)
+        self._img3 = self._ax3.imshow(self.hopfield.storage_capacity)
+
         plt.show()
 
 
@@ -75,11 +78,15 @@ class PatternCreator:
         # Activate the line option to draw a straight line
         if item.labelstr == self.labels[6]:
             self._line_option ^= 1
+        # Training the Model
         if item.labelstr == self.labels[7]:
             self.hopfield.training(self.get_trainings_set())
             self._img2.set_data(self.hopfield.weights)
+            self._img3.set_data(self.hopfield.storage_capacity)
             self._img2.autoscale()
+            self._img3.autoscale()
             self._fig.canvas.draw()
+        # Run the retrival on the pattern
         if item.labelstr == self.labels[8]:
             p = Pattern.Pattern(0)
             p.set_pattern_from_matrix(
