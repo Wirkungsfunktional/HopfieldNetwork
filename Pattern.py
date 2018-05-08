@@ -13,9 +13,12 @@ class Pattern():
     def get_column_rep(self):
         return self.pattern.flatten()
 
-    def make_random_pattern(self):
-        self.pattern = np.ones( (self.size, self.size) ) - \
-                2*np.random.randint(2, size = (self.size, self.size))
+    @staticmethod
+    def make_random_pattern(size):
+        p = Pattern(size)
+        p.set_pattern_from_matrix(np.ones( (size, size) ) - \
+                2*np.random.randint(2, size = (size, size)))
+        return p
 
     def set_point(self, i, j, value):
         self.pattern[i][j] = value

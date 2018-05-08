@@ -101,7 +101,7 @@ class PatternCreator:
 
     def add_random_pattern(self):
         """Create an uniform random pattern and add it to the patterns list."""
-        self.new_pattern.make_random_pattern()
+        self.new_pattern = Pattern.Pattern.make_random_pattern(self.size)
         self.add_pattern(self.new_pattern)
 
     def get_trainings_set(self):
