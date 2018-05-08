@@ -25,6 +25,9 @@ class PatternCreator:
         self._start_point = None
         self._end_point = None
         self.hopfield = HM.HopfieldModell(self.size)
+        self.iteration_number = 10
+        self.steps = range(self.iteration_number)
+        self.energy_function = [0]*self.iteration_number
 
 
 
@@ -34,6 +37,7 @@ class PatternCreator:
         self._ax = plt.subplot(221)
         self._ax2 = plt.subplot(222)
         self._ax3 = plt.subplot(223)
+        self._ax4 = plt.subplot(224)
         self.is_clicked = False
         self.set_element = -1 # -1 draw and 1 delete cell
 
@@ -47,6 +51,7 @@ class PatternCreator:
         self._img = self._ax.imshow(self.new_pattern.get_quadratic_rep())
         self._img2 = self._ax2.imshow(self.hopfield.weights)
         self._img3 = self._ax3.imshow(self.hopfield.storage_capacity)
+        self._img4,  = self._ax4.plot(self.steps, self.energy_function)
 
         plt.show()
 
@@ -90,7 +95,10 @@ class PatternCreator:
         if item.labelstr == self.labels[8]:
             p = Pattern.Pattern(0)
             p.set_pattern_from_matrix(
-                self.hopfield.run(self.new_pattern.get_quadratic_rep(), 100) )
+                self.hopfield.run(self.new_pattern.get_quadratic_rep(), self.iteration_number) )
+            self._img4.set_ydata(self.hopfield.H)
+            self._ax4.relim()
+            self._ax4.autoscale_view()
             self.new_pattern = p
             self.update_plot()
 

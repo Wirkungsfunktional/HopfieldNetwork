@@ -22,7 +22,7 @@ class HopfieldModell():
         for i in range(number_of_iteration):
             n = np.random.randint(self.node_number)
             init_data[n] = np.sign(np.dot(self.weights[n], init_data))
-            #H[i] = self.energy_function(init_data)
+            H[i] = self.energy_function(init_data)
         self.H = H
         return init_data.reshape( (self.size, self.size) )
 
