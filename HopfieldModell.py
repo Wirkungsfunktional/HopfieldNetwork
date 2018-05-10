@@ -47,6 +47,7 @@ class HopfieldModell():
             print("The Modell is not self coupling.")
 
     def load_data(self, name="test"):
+        """TODO: Make except save."""
         self.trainings_set = np.load(name + ".npy")
         print("Load Data")
 

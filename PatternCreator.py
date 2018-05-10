@@ -20,15 +20,11 @@ class PatternCreator:
         self.size = size
         self.patterns = []
         self.number_of_pattern = 0
-        self._fill_option = 0
-        self._line_option = 0
-        self._start_point = None
-        self._end_point = None
         self.hopfield = HM.HopfieldModell(self.size)
-        self.iteration_number = 10
+        self.iteration_number = 1000
         self.steps = range(self.iteration_number)
         self.energy_function = [0]*self.iteration_number
-
+        self.new_pattern = Pattern.Pattern(self.size)
 
 
 
@@ -40,13 +36,29 @@ class PatternCreator:
         self._ax4 = plt.subplot(224)
         self.is_clicked = False
         self.set_element = -1 # -1 draw and 1 delete cell
+        self._fill_option = 0
+        self._line_option = 0
+        self._start_point = None
+        self._end_point = None
 
-        self.labels = ('add', 'save', 'quit', 'draw/delete', 'random pattern', 'fill', 'line', 'train', 'run')
-        menu = MenuBar.make_menu(self._fig, self.labels, self.on_select)
+
+        # List of labels and functions for the menu buttons
+        self.actions = [('add', self.action_add),
+                        ('save', self.action_save),
+                        ('quit', self.action_quit),
+                        ('draw/delete', self.action_draw_delete),
+                        ('random pattern', self.add_random_pattern),
+                        ('fill', self.action_fill),
+                        ('line', self.action_line),
+                        ('train', self.action_training),
+                        ('run', self.action_pattern_run)
+                        ]
+        menu = MenuBar.make_menu(   self._fig,
+                                    map(lambda lab_fun_tuple: lab_fun_tuple[0], self.actions),
+                                    self.on_select)
         self._fig.canvas.mpl_connect('button_press_event', self.on_click)
         self._fig.canvas.mpl_connect('motion_notify_event', self.on_motion)
         self._fig.canvas.mpl_connect('button_release_event', self.on_release)
-        self.new_pattern = Pattern.Pattern(self.size)
 
         self._img = self._ax.imshow(self.new_pattern.get_quadratic_rep())
         self._img2 = self._ax2.imshow(self.hopfield.weights)
@@ -56,52 +68,54 @@ class PatternCreator:
         plt.show()
 
 
+    def action_add(self):
+        self.add_pattern(self.new_pattern)
+        self.new_pattern = Pattern.Pattern(self.size)
+        self.update_plot()
 
+    def action_save(self):
+        self.save_pattern()
+
+    def action_quit(self):
+        exit()
+
+    def action_draw_delete(self):
+        self.set_element *= -1
+
+    def action_random_pattern(self):
+        self.add_random_pattern()
+
+    def action_fill(self):
+        self._fill_option ^= 1
+        print(self._fill_option)
+
+    def action_line(self):
+        self._line_option ^= 1
+
+    def action_training(self):
+        self.hopfield.training(self.get_trainings_set())
+        self._img2.set_data(self.hopfield.weights)
+        self._img3.set_data(self.hopfield.storage_capacity)
+        self._img2.autoscale()
+        self._img3.autoscale()
+        self._fig.canvas.draw()
+
+    def action_pattern_run(self):
+        p = Pattern.Pattern(0)
+        p.set_pattern_from_matrix(
+            self.hopfield.run(  self.new_pattern.get_quadratic_rep(),
+                                self.iteration_number) )
+        self._img4.set_ydata(self.hopfield.H)
+        self._ax4.relim()
+        self._ax4.autoscale_view()
+        self.new_pattern = p
+        self.update_plot()
 
     def on_select(self, item):
-        # Add a pattern to the patterns - list
-        if item.labelstr == self.labels[0]:
-            self.add_pattern(self.new_pattern)
-            self.new_pattern = Pattern.Pattern(self.size)
-            self.update_plot()
-        # Save the patterns - list to a file
-        if item.labelstr == self.labels[1]:
-            self.save_pattern()
-        # Exit the Program
-        if item.labelstr == self.labels[2]:
-            exit()
-        # Change Draw to delete option
-        if item.labelstr == self.labels[3]:
-            self.set_element *= -1
-        # Create a random pattern and add it to the patterns list
-        if item.labelstr == self.labels[4]:
-            self.add_random_pattern()
-        # Activate the fill option of closed curves
-        if item.labelstr == self.labels[5]:
-            self._fill_option ^= 1
-            print(self._fill_option)
-        # Activate the line option to draw a straight line
-        if item.labelstr == self.labels[6]:
-            self._line_option ^= 1
-        # Training the Model
-        if item.labelstr == self.labels[7]:
-            self.hopfield.training(self.get_trainings_set())
-            self._img2.set_data(self.hopfield.weights)
-            self._img3.set_data(self.hopfield.storage_capacity)
-            self._img2.autoscale()
-            self._img3.autoscale()
-            self._fig.canvas.draw()
-        # Run the retrival on the pattern
-        if item.labelstr == self.labels[8]:
-            p = Pattern.Pattern(0)
-            p.set_pattern_from_matrix(
-                self.hopfield.run(self.new_pattern.get_quadratic_rep(), self.iteration_number) )
-            self._img4.set_ydata(self.hopfield.H)
-            self._ax4.relim()
-            self._ax4.autoscale_view()
-            self.new_pattern = p
-            self.update_plot()
-
+        """Connect the labels of the menu and its function."""
+        for i in range(len(self.actions)):
+            if item.labelstr == self.actions[i][0]:
+                self.actions[i][1]()
 
 
     def add_pattern(self, pattern):
