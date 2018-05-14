@@ -159,16 +159,17 @@ class Menu(object):
                 self.figure.canvas.draw()
                 break
 
-def make_menu(fig, labels, func):
+def make_menu(fig, observer):
     props = ItemProperties(labelcolor='black', bgcolor='yellow',
                    fontsize=15, alpha=0.2)
     hoverprops = ItemProperties(labelcolor='white', bgcolor='blue',
                             fontsize=15, alpha=0.2)
 
     menuitems = []
+    labels = observer.label
     for label in labels:
         item = MenuItem(fig, label, props=props, hoverprops=hoverprops,
-                    on_select=func)
+                    on_select=observer.execute)
         menuitems.append(item)
 
     return Menu(fig, menuitems)

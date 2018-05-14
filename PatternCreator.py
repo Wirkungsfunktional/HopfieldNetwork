@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 import MenuBar
+import Observer
 import GraphicAlgorithms as GA
 import HopfieldModell as HM
 import Pattern
@@ -42,20 +43,21 @@ class PatternCreator:
         self._end_point = None
 
 
-        # List of labels and functions for the menu buttons
-        self.actions = [('add', self.action_add),
-                        ('save', self.action_save),
-                        ('quit', self.action_quit),
-                        ('draw/delete', self.action_draw_delete),
-                        ('random pattern', self.add_random_pattern),
-                        ('fill', self.action_fill),
-                        ('line', self.action_line),
-                        ('train', self.action_training),
-                        ('run', self.action_pattern_run)
-                        ]
-        menu = MenuBar.make_menu(   self._fig,
-                                    map(lambda lab_fun_tuple: lab_fun_tuple[0], self.actions),
-                                    self.on_select)
+
+        observer = Observer.Observer()
+        observer.add_action('add', self.action_add)
+        observer.add_action('save', self.action_save)
+        observer.add_action('quit', self.action_quit)
+        observer.add_action('draw/delete', self.action_draw_delete)
+        observer.add_action('random pattern', self.add_random_pattern)
+        observer.add_action('fill', self.action_fill)
+        observer.add_action('line', self.action_line)
+        observer.add_action('train', self.action_training)
+        observer.add_action('run', self.action_pattern_run)
+
+
+
+        menu = MenuBar.make_menu(self._fig, observer)
         self._fig.canvas.mpl_connect('button_press_event', self.on_click)
         self._fig.canvas.mpl_connect('motion_notify_event', self.on_motion)
         self._fig.canvas.mpl_connect('button_release_event', self.on_release)
@@ -69,30 +71,41 @@ class PatternCreator:
 
 
     def action_add(self):
+        """Add the pattern to the list."""
         self.add_pattern(self.new_pattern)
         self.new_pattern = Pattern.Pattern(self.size)
         self.update_plot()
 
     def action_save(self):
+        """Save the pattern to a file of type .npy"""
         self.save_pattern()
 
     def action_quit(self):
+        """Close the Program."""
         exit()
 
     def action_draw_delete(self):
+        """Change the option from draw to erase pixel and backwards after new
+        click."""
         self.set_element *= -1
 
     def action_random_pattern(self):
+        """Add a ramdom generated Pattern to the pattern list."""
         self.add_random_pattern()
 
     def action_fill(self):
+        """Achtivate the option to fill the pixel of a bounded region after
+        clicking into this region."""
         self._fill_option ^= 1
         print(self._fill_option)
 
     def action_line(self):
+        """Activate the option to draw a line"""
         self._line_option ^= 1
 
     def action_training(self):
+        """Use the set of pattern to train the Hopfield model and plot the
+        weights und storage_capacity into to additional plots."""
         self.hopfield.training(self.get_trainings_set())
         self._img2.set_data(self.hopfield.weights)
         self._img3.set_data(self.hopfield.storage_capacity)
@@ -101,6 +114,8 @@ class PatternCreator:
         self._fig.canvas.draw()
 
     def action_pattern_run(self):
+        """Perform the storage retrival on the pattern and plot the Energy of
+        this operation."""
         p = Pattern.Pattern(0)
         p.set_pattern_from_matrix(
             self.hopfield.run(  self.new_pattern.get_quadratic_rep(),
@@ -110,12 +125,6 @@ class PatternCreator:
         self._ax4.autoscale_view()
         self.new_pattern = p
         self.update_plot()
-
-    def on_select(self, item):
-        """Connect the labels of the menu and its function."""
-        for i in range(len(self.actions)):
-            if item.labelstr == self.actions[i][0]:
-                self.actions[i][1]()
 
 
     def add_pattern(self, pattern):
