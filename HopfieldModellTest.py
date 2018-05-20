@@ -1,5 +1,6 @@
 from HopfieldModell import HopfieldModell
 import unittest
+import numpy as np
 
 
 
@@ -36,8 +37,18 @@ class HopfieldModellTestCase(unittest.TestCase):
         h.delete_self_coupling()
         self.assertFalse(h.is_self_coupling())
 
+    def test_stochastic_run(self):
+        n = 20
+        h = HopfieldModell(n)
+        h.create_maximal_random_set()
+        h.training()
+        h.set_run_mode("stochastic")
+        self.assertAlmostEqual(h.test_trainings_pattern(0.4, 10000), 0.0)
 
-test = 0
+
+
+
+test = 1
 version = 3
 if not test:
     if version == 1:

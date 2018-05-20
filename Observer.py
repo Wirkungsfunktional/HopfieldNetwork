@@ -4,6 +4,7 @@ class Observer():
     def __init__(self):
         self.label = []
         self.action = []
+        
     def add_action(self, name, func):
         self.label.append(name)
         self.action.append(func)

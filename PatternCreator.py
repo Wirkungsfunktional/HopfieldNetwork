@@ -22,6 +22,7 @@ class PatternCreator:
         self.patterns = []
         self.number_of_pattern = 0
         self.hopfield = HM.HopfieldModell(self.size)
+        self.hopfield.set_run_mode("stochastic")
         self.iteration_number = 1000
         self.steps = range(self.iteration_number)
         self.energy_function = [0]*self.iteration_number
@@ -31,7 +32,7 @@ class PatternCreator:
 
         self._fig = plt.figure()
         self._fig.subplots_adjust(left=0.5)
-        self._ax = plt.subplot(221)
+        self._ax  = plt.subplot(221)
         self._ax2 = plt.subplot(222)
         self._ax3 = plt.subplot(223)
         self._ax4 = plt.subplot(224)
@@ -62,10 +63,10 @@ class PatternCreator:
         self._fig.canvas.mpl_connect('motion_notify_event', self.on_motion)
         self._fig.canvas.mpl_connect('button_release_event', self.on_release)
 
-        self._img = self._ax.imshow(self.new_pattern.get_quadratic_rep())
-        self._img2 = self._ax2.imshow(self.hopfield.weights)
-        self._img3 = self._ax3.imshow(self.hopfield.storage_capacity)
-        self._img4,  = self._ax4.plot(self.steps, self.energy_function)
+        self._img   = self._ax.imshow(self.new_pattern.get_quadratic_rep())
+        self._img2  = self._ax2.imshow(self.hopfield.weights)
+        self._img3  = self._ax3.imshow(self.hopfield.storage_capacity)
+        self._img4, = self._ax4.plot(self.steps, self.energy_function)
 
         plt.show()
 
