@@ -21,8 +21,7 @@ class PatternCreator:
         self.size = size
         self.patterns = []
         self.number_of_pattern = 0
-        self.hopfield = HM.HopfieldModell(self.size)
-        self.hopfield.set_run_mode("stochastic")
+        self.hopfield = HM.StochasticHopfieldModell(self.size)
         self.iteration_number = 1000
         self.steps = range(self.iteration_number)
         self.energy_function = [0]*self.iteration_number

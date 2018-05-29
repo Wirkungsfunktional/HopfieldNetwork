@@ -47,3 +47,51 @@ def line_draw(plot_array, x_start, y_start, x_end, y_end):
             y += 1
             d += dd_ro
     return plot_array
+
+
+
+class DrawingTool():
+    def __init__(self, fig, img, data):
+        self._ID = None
+        self._fig = fig
+        self._img = img
+        self.data = data
+        self._fig.canvas.mpl_connect('button_press_event', self.on_click)
+        self._fig.canvas.mpl_connect('motion_notify_event', self.on_motion)
+        self._fig.canvas.mpl_connect('button_release_event', self.on_release)
+
+    def update(self):
+        self._img.set_data(self.new_pattern.get_quadratic_rep())
+        self._img.autoscale()
+        self._fig.canvas.draw()
+
+    def on_click(self, event):
+        pass
+
+    def on_motion(self, event):
+        pass
+
+    def on_release(self, event):
+        pass
+
+
+class LineDrawTool(DrawingTool):
+    def __init__(self):
+        self.x0 = None
+        self.y0 = None
+        self.x1 = None
+        self.y1 = None
+
+    def on_click(self, event):
+        mode = plt.get_current_fig_manager().toolbar.mode
+        if event.button == 1 and event.inaxes and mode == '':
+            self.x0, self.y0 = int(event.xdata+0.5), int(event.ydata+0.5)
+
+    def on_motion(self, event):
+        pass
+
+    def on_release(self, event):
+        self.x1, self.y1 = int(event.xdata+0.5), int(event.ydata+0.5)
+        GA.line_draw(       self.data.get_quadratic_rep(),
+                            self.x0, self.y0, self.x1,self.y1)
+        self.update()

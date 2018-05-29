@@ -12,14 +12,10 @@ class HopfieldModell():
         self.weights = np.zeros( (self.node_number, self.node_number) )
         self.storage_capacity = np.zeros( (10, 10) )
         self.p_err = 1.0
-        self.run_func = self.deterministic_run
-        self.temp = 0.1
         self.energy_option = 0
 
-    def run(self, *args: "see derterministic_run() stochastic_run()"):
-        return self.run_func(*args)
 
-    def deterministic_run(self, init_data, number_of_iteration: int):
+    def run(self, init_data, number_of_iteration: int):
         """Evaluate the random choosen node evaluation algorithm."""
         assert init_data.shape == (self.size, self.size), "incompatible array size"
         init_data = init_data.flatten()
@@ -31,28 +27,7 @@ class HopfieldModell():
         self.H = H
         return init_data.reshape( (self.size, self.size) )
 
-    def stochastic_run(self, init_data, number_of_iteration: int):
-        assert init_data.shape == (self.size, self.size), "incompatible array size"
-        init_data = init_data.flatten()
-        H = np.zeros(number_of_iteration)
-        for i in range(number_of_iteration):
-            n = np.random.randint(self.node_number)
-            p = np.random.rand()
-            h = np.dot(self.weights[n], init_data)
-            if p < 1/(1 + np.exp(-2*h/self.temp)):
-                init_data[n] = 1
-            else:
-                init_data[n] = -1
-            if self.energy_option:
-                H[i] = self.energy_function(init_data)
-        self.H = H
-        return init_data.reshape( (self.size, self.size) )
 
-    def set_run_mode(self, mode: "stochastic, deterministic"):
-        if mode == "stochastic":
-            self.run_func = self.stochastic_run
-        if mode == "deterministic":
-            self.run_func = self.deterministic_run
 
     def training(   self,
                     trainings_set = "None"):
@@ -62,7 +37,7 @@ class HopfieldModell():
             self.trainings_set = trainings_set
         pattern_number, pattern_size = self.trainings_set.shape
         assert pattern_size == self.node_number, "incompatible array size"
-        self.storage_capacity = self.get_storage_capacity(self.trainings_set)
+        #self.storage_capacity = self.get_storage_capacity(self.trainings_set)
         for n in range(pattern_number):
             self.weights += np.outer(self.trainings_set[n], self.trainings_set[n])
         self.weights /= self.node_number
@@ -79,7 +54,7 @@ class HopfieldModell():
         print("Load Data")
 
     @staticmethod
-    def get_storage_capacity(trainings_set) -> "Storage capacity":
+    def get_storage_capacity(trainings_set):
         """Compute the storage capacity of the trainings_set. if C > 1 the Modell
         is not stable"""
         assert type(trainings_set) != None, "No trainings_set given."
@@ -112,7 +87,7 @@ class HopfieldModell():
         plt.plot(range(len(self.H)), self.H)
         plt.show()
 
-    def is_self_coupling(self) -> "Bool":
+    def is_self_coupling(self):
         """The nodes are self coupling if there are weights[i][i] != 0. If so the
         function returns True else False. Self coupling can produce spurious
         states and is therefore not likely. See delete_self_coupling()."""
@@ -157,3 +132,29 @@ class HopfieldModell():
             result_pattern = self.run(desturbed_pattern, number_of_iteration)
             s += np.sum(np.abs(test_pattern - result_pattern))
         return s
+
+
+class StochasticHopfieldModell(HopfieldModell):
+
+    def __init__(self, size):
+        super().__init__(size)
+        self.temp = 0.1
+
+    def run(self, init_data, number_of_iteration: int):
+        """Evaluate the random choosen node evaluation algorithm with a non
+        determinstic extension of an artifical temperatur parameter."""
+        assert init_data.shape == (self.size, self.size), "incompatible array size"
+        init_data = init_data.flatten()
+        H = np.zeros(number_of_iteration)
+        for i in range(number_of_iteration):
+            n = np.random.randint(self.node_number)
+            p = np.random.rand()
+            h = np.dot(self.weights[n], init_data)
+            if p < 1/(1 + np.exp(-4*h/self.temp)):
+                init_data[n] = 1
+            else:
+                init_data[n] = -1
+            if self.energy_option:
+                H[i] = self.energy_function(init_data)
+        self.H = H
+        return init_data.reshape( (self.size, self.size) )
