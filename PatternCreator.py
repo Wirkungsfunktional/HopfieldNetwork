@@ -21,39 +21,28 @@ class PatternCreator:
         self.size = size
         self.patterns = []
         self.number_of_pattern = 0
-        self.hopfield = HM.StochasticHopfieldModell(self.size)
+        self.hopfield = HM.HopfieldModell(self.size)
         self.iteration_number = 1000
         self.steps = range(self.iteration_number)
         self.energy_function = [0]*self.iteration_number
         self.new_pattern = Pattern.Pattern(self.size)
 
 
-
         self._fig = plt.figure()
         self._fig.subplots_adjust(left=0.5)
-        self._ax  = plt.subplot(221)
-        self._ax2 = plt.subplot(222)
-        self._ax3 = plt.subplot(223)
-        self._ax4 = plt.subplot(224)
-        self.is_clicked = False
-        self.set_element = -1 # -1 draw and 1 delete cell
-        self._fill_option = 0
-        self._line_option = 0
-        self._start_point = None
-        self._end_point = None
-
+        self._ax  = plt.subplot(111)
 
 
         observer = Observer.Observer()
         observer.add_action('add', self.action_add)
         observer.add_action('save', self.action_save)
         observer.add_action('quit', self.action_quit)
-        observer.add_action('draw/delete', self.action_draw_delete)
-        observer.add_action('random pattern', self.add_random_pattern)
-        observer.add_action('fill', self.action_fill)
-        observer.add_action('line', self.action_line)
-        observer.add_action('train', self.action_training)
-        observer.add_action('run', self.action_pattern_run)
+        observer.add_action('Pen Tool', self.action_draw_delete)
+        observer.add_action('Fill Tool', self.action_fill)
+        observer.add_action('Line Tool', self.action_line)
+        observer.add_action('Random Pattern', self.add_random_pattern
+        observer.add_action('Train', self.action_training)
+        observer.add_action('Run', self.action_pattern_run)
 
 
 
@@ -62,10 +51,14 @@ class PatternCreator:
         self._fig.canvas.mpl_connect('motion_notify_event', self.on_motion)
         self._fig.canvas.mpl_connect('button_release_event', self.on_release)
 
-        self._img   = self._ax.imshow(self.new_pattern.get_quadratic_rep())
-        self._img2  = self._ax2.imshow(self.hopfield.weights)
-        self._img3  = self._ax3.imshow(self.hopfield.storage_capacity)
-        self._img4, = self._ax4.plot(self.steps, self.energy_function)
+        self.plot1 = GA.Canvas( self._fig,
+                                self._ax.imshow(self.new_pattern.get_quadratic_rep()),
+                                self.new_pattern)
+
+        self.line_draw_tool = GA.LineDrawTool(self.plot1)
+        self.fill_draw_tool = GA.FillDrawTool(self.plot1)
+        self.pen_draw_tool = GA.PenDrawTool(self.plot1)
+        self.draw_tool = self.pen_draw_tool
 
         plt.show()
 
@@ -74,7 +67,8 @@ class PatternCreator:
         """Add the pattern to the list."""
         self.add_pattern(self.new_pattern)
         self.new_pattern = Pattern.Pattern(self.size)
-        self.update_plot()
+        self.plot1.set_data(self.new_pattern)
+        self.plot1.update()
 
     def action_save(self):
         """Save the pattern to a file of type .npy"""
@@ -85,33 +79,26 @@ class PatternCreator:
         exit()
 
     def action_draw_delete(self):
-        """Change the option from draw to erase pixel and backwards after new
-        click."""
-        self.set_element *= -1
+        """Change the option from draw to pen_draw_tool."""
+        self.draw_tool = self.pen_draw_tool
 
     def action_random_pattern(self):
-        """Add a ramdom generated Pattern to the pattern list."""
+        """Ereates a random pattern."""
         self.add_random_pattern()
 
     def action_fill(self):
-        """Achtivate the option to fill the pixel of a bounded region after
+        """Activate the option to fill the pixel of a bounded region after
         clicking into this region."""
-        self._fill_option ^= 1
-        print(self._fill_option)
+        self.draw_tool = self.fill_draw_tool
 
     def action_line(self):
         """Activate the option to draw a line"""
-        self._line_option ^= 1
+        self.draw_tool = self.line_draw_tool
 
     def action_training(self):
         """Use the set of pattern to train the Hopfield model and plot the
         weights und storage_capacity into to additional plots."""
         self.hopfield.training(self.get_trainings_set())
-        self._img2.set_data(self.hopfield.weights)
-        self._img3.set_data(self.hopfield.storage_capacity)
-        self._img2.autoscale()
-        self._img3.autoscale()
-        self._fig.canvas.draw()
 
     def action_pattern_run(self):
         """Perform the storage retrival on the pattern and plot the Energy of
@@ -120,11 +107,9 @@ class PatternCreator:
         p.set_pattern_from_matrix(
             self.hopfield.run(  self.new_pattern.get_quadratic_rep(),
                                 self.iteration_number) )
-        self._img4.set_ydata(self.hopfield.H)
-        self._ax4.relim()
-        self._ax4.autoscale_view()
         self.new_pattern = p
-        self.update_plot()
+        self.plot1.set_data(self.new_pattern)
+        self.plot1.update()
 
 
     def add_pattern(self, pattern):
@@ -140,7 +125,8 @@ class PatternCreator:
     def add_random_pattern(self):
         """Create an uniform random pattern and add it to the patterns list."""
         self.new_pattern = Pattern.Pattern.make_random_pattern(self.size)
-        self.add_pattern(self.new_pattern)
+        self.plot1.set_data(self.new_pattern)
+        self.plot1.update()
 
     def get_trainings_set(self):
         """Cast the list to an numpy array and returns it in shape
@@ -157,43 +143,16 @@ class PatternCreator:
         options it draw the pixel."""
         mode = plt.get_current_fig_manager().toolbar.mode
         if event.button == 1 and event.inaxes and mode == '':
-
-            if self._fill_option == 1:
-                GA.flood_fill(  self.new_pattern.get_quadratic_rep(),
-                                int(event.xdata+0.5),
-                                int(event.ydata+0.5))
-                self.update_plot()
-            elif self._line_option == 1:
-                self._start_point = (int(event.xdata+0.5),int(event.ydata+0.5))
-            else:
-                self.is_clicked = True
-                self.update(int(event.xdata+0.5),int(event.ydata+0.5))
+            self.draw_tool.on_click(event)
 
     def on_motion(self, event):
         if event.inaxes != self._ax: return
-        if self.is_clicked:
-            self.update(int(event.xdata+0.5),int(event.ydata+0.5))
+        self.draw_tool.on_motion(event)
 
     def on_release(self, event):
-        self.is_clicked = False
-        if self._line_option == 1:
-            self._end_point = (int(event.xdata+0.5),int(event.ydata+0.5))
-            GA.line_draw(   self.new_pattern.get_quadratic_rep(),
-                            self._start_point[0],
-                            self._start_point[1],
-                            self._end_point[0],
-                            self._end_point[1])
-            self.update_plot()
-
-    def update(self, i, j):
-        """Change the sign of the cell (i,j) and update the plot."""
-        self.new_pattern.set_point(j, i, self.set_element)
-        self.update_plot()
-
-    def update_plot(self):
-        self._img.set_data(self.new_pattern.get_quadratic_rep())
-        self._img.autoscale()
-        self._fig.canvas.draw()
+        mode = plt.get_current_fig_manager().toolbar.mode
+        if event.button == 1 and event.inaxes and mode == '':
+            self.draw_tool.on_release(event)
 
 
     def save_pattern(self):
@@ -201,12 +160,6 @@ class PatternCreator:
         print("Saved Pattern.")
 
 
-    def decode_to_orthogonal_code(self):
-        """TODO: Find some way to convert a set of pattern such that the
-        Correlation \sum x_j^n x_j^m = 0 for m != n is at most satisfied.
-        Therefore the patterns are orthogonal and the capacity of the neural
-        network should increase."""
-        pass
 
 print(__doc__)
-p = PatternCreator(20)
+p = PatternCreator(25)
