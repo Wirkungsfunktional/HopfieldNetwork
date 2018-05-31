@@ -11,7 +11,6 @@ class HopfieldModell():
         self.H = None
         self.weights = np.zeros( (self.node_number, self.node_number) )
         self.storage_capacity = np.zeros( (10, 10) )
-        self.p_err = 1.0
         self.energy_option = 0
 
 
@@ -23,7 +22,8 @@ class HopfieldModell():
         for i in range(number_of_iteration):
             n = np.random.randint(self.node_number)
             init_data[n] = np.sign(np.dot(self.weights[n], init_data))
-            H[i] = self.energy_function(init_data)
+            if self.energy_option:
+                H[i] = self.energy_function(init_data)
         self.H = H
         return init_data.reshape( (self.size, self.size) )
 
@@ -41,12 +41,8 @@ class HopfieldModell():
         for n in range(pattern_number):
             self.weights += np.outer(self.trainings_set[n], self.trainings_set[n])
         self.weights /= self.node_number
-        self.p_err = (1.0 - sis.erf(np.sqrt(pattern_size / (2.0*pattern_number))))/2.0
-        print("Error is: " + str(self.p_err))
-        if self.is_self_coupling():
-            print("The Modell is self coupling. This can produce spurious states.")
-        else:
-            print("The Modell is not self coupling.")
+        self.get_storage_capacity(self.trainings_set)
+
 
     def load_data(self, name="test"):
         """TODO: Make except save."""
@@ -55,7 +51,7 @@ class HopfieldModell():
 
     @staticmethod
     def get_storage_capacity(trainings_set):
-        """Compute the storage capacity of the trainings_set. if C > 1 the Modell
+        """Compute the storage capacity of the trainings_set. if C > 1 the Model
         is not stable"""
         assert type(trainings_set) != None, "No trainings_set given."
         number_of_pattern, pattern_size = trainings_set.shape

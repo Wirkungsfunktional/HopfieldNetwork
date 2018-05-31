@@ -1,4 +1,4 @@
-
+import numpy as np
 
 class Canvas():
     def __init__(self, fig, img, data):
@@ -54,8 +54,7 @@ class LineDrawTool(GraphicTool):
         self.update()
 
     def update(self):
-        self.line_draw(  self.canvas.get_data(),
-                    self.x_start, self.y_start, self.x_end, self.y_end)
+        self.bresenham_line_draw()
         super().update()
 
     def line_draw(self, plot_array, x_start, y_start, x_end, y_end):
@@ -79,6 +78,50 @@ class LineDrawTool(GraphicTool):
                 y += 1
                 d += dd_ro
         return plot_array
+
+    def bresenham_line_draw(self):
+        dx = self.x_end - self.x_start
+        dy = self.y_end - self.y_start
+        x = self.x_start
+        y = self.y_start
+        inc_x1 = 0
+        inc_x2 = 0
+        inc_y1 = 0
+        inc_y2 = 0
+
+
+        if dx < 0:
+            inc_x1 = -1
+            inc_x2 = -1
+        elif dx > 0:
+            inc_x1 = 1
+            inc_x2 = 1
+        if dy < 0:
+            inc_y1 = -1
+        elif dy>0:
+            inc_y1 = 1
+        l = np.abs(dx);
+        s = np.abs(dy);
+        if not (l>s):
+            l, s = s, l
+            if dy < 0:
+                inc_y2 = -1
+            elif (dy>0):
+                inc_y2 = 1
+            inc_x2 = 0
+
+        step = l / 2;
+        for i in range(l+1):
+            self.canvas.data.set_point(y, x, -1)
+            step += s
+            if not (step < l):
+                step -= l
+                x += inc_x1
+                y += inc_y1
+            else:
+                x += inc_x2
+                y += inc_y2
+
 
 class FillDrawTool(GraphicTool):
     def __init__(self, canvas):
@@ -137,3 +180,72 @@ class PenDrawTool(GraphicTool):
                                         int(event.xdata+0.5),
                                         -1)
             super().update()
+
+
+class RectangleDrawTool(GraphicTool):
+    def __init__(self, canvas):
+        super().__init__(canvas)
+
+    def on_release(self, event):
+        super().on_release(event)
+        self.draw_rectangle()
+        super().update()
+
+    def draw_rectangle(self):
+        inc_range = lambda a, b: range(a, b+1)
+        for i in inc_range(*sorted([self.x_start, self.x_end])):
+            self.canvas.data.set_point( self.y_start, i, -1)
+            self.canvas.data.set_point( self.y_end, i, -1)
+        for i in inc_range(*sorted([self.y_start, self.y_end])):
+            self.canvas.data.set_point( i, self.x_start, -1)
+            self.canvas.data.set_point( i, self.x_end, -1)
+
+
+class CircleDrawTool(GraphicTool):
+    def __init__(self, canvas):
+        super().__init__(canvas)
+
+
+    def on_release(self, event):
+        super().on_release(event)
+        self.draw_circle()
+        super().update()
+
+    def draw_circle(self):
+        r = int(np.sqrt((self.x_end - self.x_start)**2 + (self.y_end - self.y_start)**2 ))
+        x = 0
+        y = r
+        y0 = self.y_start
+        x0 = self.x_start
+        d = 1 - r
+        deltaE = 3
+        deltaSE = -2 * r + 5
+        self.canvas.data.set_point(y0 + y, x0 + x, -1)
+        self.canvas.data.set_point(y0 - y, x0 + x, -1)
+        self.canvas.data.set_point(y0 + y, x0 - x, -1)
+        self.canvas.data.set_point(y0 - y, x0 - x, -1)
+        self.canvas.data.set_point(y0 + x, x0 + y, -1)
+        self.canvas.data.set_point(y0 - x, x0 + y, -1)
+        self.canvas.data.set_point(y0 + x, x0 - y, -1)
+        self.canvas.data.set_point(y0 - x, x0 - y, -1)
+
+        while y > x:
+            if d < 0:
+                d += deltaE;
+                deltaE += 2;
+                deltaSE += 2;
+                x += 1;
+            else:
+                d += deltaSE;
+                deltaE += 2;
+                deltaSE += 4;
+                x += 1;
+                y -= 1;
+            self.canvas.data.set_point(y0 + y, x0 + x, -1)
+            self.canvas.data.set_point(y0 - y, x0 + x, -1)
+            self.canvas.data.set_point(y0 + y, x0 - x, -1)
+            self.canvas.data.set_point(y0 - y, x0 - x, -1)
+            self.canvas.data.set_point(y0 + x, x0 + y, -1)
+            self.canvas.data.set_point(y0 - x, x0 + y, -1)
+            self.canvas.data.set_point(y0 + x, x0 - y, -1)
+            self.canvas.data.set_point(y0 - x, x0 - y, -1)

@@ -40,7 +40,10 @@ class PatternCreator:
         observer.add_action('Pen Tool', self.action_draw_delete)
         observer.add_action('Fill Tool', self.action_fill)
         observer.add_action('Line Tool', self.action_line)
-        observer.add_action('Random Pattern', self.add_random_pattern
+        observer.add_action('Rectangle Tool', self.action_rectangle)
+        observer.add_action('Circle Tool', self.action_circle)
+        observer.add_action('Random Pattern', self.add_random_pattern)
+        observer.add_action('Load Pattern', self.action_load)
         observer.add_action('Train', self.action_training)
         observer.add_action('Run', self.action_pattern_run)
 
@@ -58,10 +61,22 @@ class PatternCreator:
         self.line_draw_tool = GA.LineDrawTool(self.plot1)
         self.fill_draw_tool = GA.FillDrawTool(self.plot1)
         self.pen_draw_tool = GA.PenDrawTool(self.plot1)
+        self.rect_draw_tool = GA.RectangleDrawTool(self.plot1)
+        self.circ_draw_tool = GA.CircleDrawTool(self.plot1)
         self.draw_tool = self.pen_draw_tool
 
         plt.show()
 
+    def action_circle(self):
+        self.draw_tool = self.circ_draw_tool
+
+    def action_load(self):
+        self.new_pattern = self.patterns[0]
+        self.plot1.set_data(self.new_pattern)
+        self.plot1.update()
+
+    def action_rectangle(self):
+        self.draw_tool = self.rect_draw_tool
 
     def action_add(self):
         """Add the pattern to the list."""
@@ -83,7 +98,7 @@ class PatternCreator:
         self.draw_tool = self.pen_draw_tool
 
     def action_random_pattern(self):
-        """Ereates a random pattern."""
+        """Creates a random pattern."""
         self.add_random_pattern()
 
     def action_fill(self):
@@ -134,7 +149,7 @@ class PatternCreator:
         one dimmension flattened vector of the quadratic matrix of the pattern."""
         ret = np.zeros( (self.number_of_pattern, self.size**2) )
         for i in range(self.number_of_pattern):
-            ret[i] = self.patterns[i].get_column_rep()
+            ret[i] = self.patterns[i].get_column_rep().copy()
         return ret
 
     def on_click(self, event):
@@ -162,4 +177,4 @@ class PatternCreator:
 
 
 print(__doc__)
-p = PatternCreator(25)
+p = PatternCreator(100)

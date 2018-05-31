@@ -27,3 +27,6 @@ class Pattern():
         shape = a.shape
         self.size = shape[0]
         self.pattern = a
+
+    def apply_mask(self, mask):
+        self.pattern *= mask.pattern
