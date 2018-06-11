@@ -1,12 +1,21 @@
 import numpy as np
+import Pattern as PA
 
 class Canvas():
     def __init__(self, fig, img, data):
         self.data = data
+        self.data_buffer = PA.Pattern.copy(data)
         self.img = img
         self.fig = fig
+        self.command_list = []
 
     def update(self):
+        self.command_list.append(UndoableDrawCommand(self.data_buffer, self))
+        self.command_list[-1].execute()
+        self.data_buffer = PA.Pattern.copy(self.data)
+
+
+    def update_plot(self):
         self.img.set_data(self.data.get_quadratic_rep())
         self.img.autoscale()
         self.fig.canvas.draw()
@@ -18,7 +27,33 @@ class Canvas():
         self.data = data
 
 
+class Command():
+    def __init__(self):
+        pass
 
+    def execute(self):
+        pass
+
+class UndoableCommand(Command):
+    def __init__(self, data):
+        super().__init__()
+        self.store_state = data
+
+    def undo(self):
+        pass
+
+class UndoableDrawCommand(UndoableCommand):
+    def __init__(self, data, canvas):
+        super().__init__(data)
+        self.canvas = canvas
+
+    def execute(self):
+        self.canvas.update_plot()
+
+    def undo(self):
+        self.canvas.data = self.store_state
+        self.canvas.data_buffer = PA.Pattern.copy(self.store_state)
+        self.canvas.update_plot()
 
 
 class GraphicTool():

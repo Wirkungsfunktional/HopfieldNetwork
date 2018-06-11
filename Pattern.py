@@ -20,6 +20,13 @@ class Pattern():
                 2*np.random.randint(2, size = (size, size)))
         return p
 
+    @staticmethod
+    def copy(pattern):
+        p = Pattern(0)
+        p.size = pattern.size
+        p.pattern = np.copy(pattern.pattern)
+        return p
+
     def set_point(self, i, j, value):
         self.pattern[i][j] = value
 

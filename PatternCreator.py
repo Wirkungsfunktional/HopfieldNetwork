@@ -46,7 +46,7 @@ class PatternCreator:
         observer.add_action('Load Pattern', self.action_load)
         observer.add_action('Train', self.action_training)
         observer.add_action('Run', self.action_pattern_run)
-
+        observer.add_action('Undo', self.action_undo)
 
 
         menu = MenuBar.make_menu(self._fig, observer)
@@ -66,6 +66,9 @@ class PatternCreator:
         self.draw_tool = self.pen_draw_tool
 
         plt.show()
+
+    def action_undo(self):
+        self.plot1.command_list.pop().undo()
 
     def action_circle(self):
         self.draw_tool = self.circ_draw_tool
